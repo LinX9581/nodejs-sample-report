@@ -55,7 +55,13 @@
 
     <div class="row">
         <div class="card-body text-center">
-            <canvas id="stock"></canvas>
+            <canvas id="stock1"></canvas>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="card-body text-center">
+            <canvas id="stock2"></canvas>
         </div>
     </div>
 
@@ -71,6 +77,7 @@
 <script>
     dateRangePicker()
     async function dateRangePicker() {
+        let today = moment(new Date()).add(-0, 'days').format('MM-DD-YYYY');
         let pickerYesterday = moment(new Date()).add(-1, 'days').format('MM-DD-YYYY');
         let defaultYesterday = moment(new Date()).add(-1, 'days').format('YYYY-MM-DD');
         $("#begin_date").html("<text>" + defaultYesterday + "</text>");
@@ -79,23 +86,23 @@
             // "dateLimit": {
             //     "days": 370
             // },
-            "startDate": pickerYesterday,
-            "endDate": pickerYesterday,
+            "startDate": today,
+            "endDate": today,
             "minDate": "01/01/2020",
-            "maxDate": pickerYesterday
+            "maxDate": today
         }, function (start, end, label) {
             $("#begin_date").html("<text>" + start.format('YYYY-MM-DD') + "</text>");
             $("#end_date").html("<text>" + end.format('YYYY-MM-DD') + "</text>");
         });
     }
 
-    let realtimeChart;
+    let charts = {};
     async function genChart(type, chartId, chartTimeLabel, chartData, opt) {
-        if (realtimeChart) {
-            realtimeChart.destroy();
+        if (charts[chartId]) {
+            charts[chartId].destroy();
         }
         const ctx = document.getElementById(chartId).getContext('2d');
-        realtimeChart = new Chart(ctx, {
+        charts[chartId] = new Chart(ctx, {
             type: type,
             data: {
                 labels: chartTimeLabel,
@@ -139,27 +146,48 @@
             }).then(res => res.json()).then(res => {
                 console.log(res);
 
-                let getStockData = res.stockData;
-
-                let tmpStockArray = [];
-                let timeLableArray = getStockData.map(item => item.time);
-                let stockLable = ['自營商買(買權)', '自營商賣(買權)', '自營商買(賣權)', '自營商賣(賣權)', '台灣期貨前10(買方)', '台灣期貨前10(賣方)']
-                let color = ['#FFBD00', '#444444', 'gray', 'black', 'green', 'red']
-                for (let i = 0; i < stockLable.length; i++) {
-                    let data = getStockData.map(item => item['col' + (i + 1)]);
-                    tmpStockArray.push({
-                        label: stockLable[i],
+                let getStockData1 = res.stockData1;
+                let getStockData2 = res.stockData2;
+                console.log(getStockData2)
+                let tmpStockArray1 = [];
+                let timeLableArray1 = getStockData1.map(item => item.time);
+                let stockLable1 = ['自營商買(買權)', '自營商買(賣權)', '自營商賣(買權)', '自營商賣(賣權)']
+                let color1 = ['red', 'green', 'black', '#1f77b4']
+                for (let i = 0; i < stockLable1.length; i++) {
+                    let data = getStockData1.map(item => item['col' + (i + 1)]);
+                    tmpStockArray1.push({
+                        label: stockLable1[i],
                         data: data,
-                        backgroundColor: color[i],
-                        borderColor: color[i],
+                        backgroundColor: color1[i],
+                        borderColor: color1[i],
                         borderWidth: 1,
                         fill: false,
                         cubicInterpolationMode: 'monotone',
                         tension: 0.1
                     });
                 }
-                genChart('line', 'stock', timeLableArray, tmpStockArray)
-                if (res.stockData != '') {
+                genChart('bar', 'stock1', timeLableArray1, tmpStockArray1)
+
+                let tmpStockArray2 = [];
+                let timeLableArray2 = getStockData2.map(item => item.time);
+                let stockLable2 = ['BC+BP', '負SC+SP', '全部相加', '主力前10未平倉']
+                let color2 = ['red', 'green', 'black', '#1f77b4']
+                for (let i = 0; i < stockLable2.length; i++) {
+                    let data2 = getStockData2.map(item => item['col' + (i + 5)]);
+                    tmpStockArray2.push({
+                        label: stockLable2[i],
+                        data: data2,
+                        backgroundColor: color2[i],
+                        borderColor: color2[i],
+                        borderWidth: 1,
+                        fill: false,
+                        cubicInterpolationMode: 'monotone',
+                        tension: 0.1
+                    });
+                }
+                genChart('bar', 'stock2', timeLableArray2, tmpStockArray2)
+
+                if (res.stockTotalData != '') {
                     // 每次查詢都先清空數據
                     $(".dataTableArea").removeClass("invisible");
                     $(".total").html("<text></text>");
@@ -170,9 +198,9 @@
                     }
                     //把資料建成table  ;  data=table head
                     let queryTable = document.querySelector(".queryTable");
-                    let tableLabel = ['時間', '自營商買(買權)', '自營商賣(買權)', '自營商買(賣權)', '自營商賣(賣權)', '台灣期貨前10(買方)', '台灣期貨前10(賣方)']
-
-                    generateTable(queryTable, res.stockData);
+                    let tableLabel = ['時間', '自營商買(買權)', '自營商買(賣權)', '自營商賣(買權)', '自營商賣(賣權)', 'BC+BP', '負SC+SP', '全部相加', '主力前10未平倉']
+                    console.log(res.stockTotalData)
+                    generateTable(queryTable, res.stockTotalData);
                     generateTableHead(queryTable, tableLabel);
                     //dataTable相關屬性
                     let dataTable = $('#datatable').DataTable({
@@ -193,7 +221,7 @@
                         "iDisplayLength": 20,
                         "destroy": true,
                         "order": [
-                            [3, "desc"]
+                            [0, "desc"]
                         ],
                         drawCallback: function (row) {
                             var intVal = function (i) {

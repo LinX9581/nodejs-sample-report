@@ -6,7 +6,8 @@ import query from "../mysql-connect";
 // getStock();
 export async function getStock() {
   const dateFormat = "YYYY/MM/DD";
-  const dates = [...Array(1).keys()].map((_, i) => moment().subtract(i + 1, "days"));
+  // const dates = [...Array(100).keys()].map((_, i) => moment().subtract(i + 1081, "days"));
+  const dates = [...Array(1).keys()].map((_, i) => moment().subtract(i, "days"));
   let getData = [];
   for (const date of dates) {
     const formattedDate = moment(date).format(dateFormat);
@@ -34,16 +35,16 @@ export async function getStock() {
 
     // 使用輔助函數獲取數字
     const number1 = parseNumber(
-      "#printhere > div:nth-child(4) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(4) > td:nth-child(8)"
+      "#printhere > div:nth-child(4) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(4) > td:nth-child(12)"
     );
     const number2 = parseNumber(
-      "#printhere > div:nth-child(4) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(4) > td:nth-child(10)"
+      "#printhere > div:nth-child(4) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(7) > td:nth-child(10)"
     );
     const number3 = parseNumber(
-      "#printhere > div:nth-child(4) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(7) > td:nth-child(6)"
+      "#printhere > div:nth-child(4) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(4) > td:nth-child(14)"
     );
     const number4 = parseNumber(
-      "#printhere > div:nth-child(4) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(7) > td:nth-child(8)"
+      "#printhere > div:nth-child(4) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(7) > td:nth-child(12)"
     );
 
     const postData2 = {
@@ -62,15 +63,19 @@ export async function getStock() {
     function parseNumber2(selector) {
       let content = $2(selector).html();
 
-      // 如果 content 为 null，则直接返回 0
+      // 如果 content 為 null，則直接返回 0
       if (content === null) {
         return 0;
       }
 
-      const numberString = content.split("<br>")[0].trim().replace(/,/g, "");
+      const regex = /\(([^)]+)\)/; // 新增：正則表達式用於提取括號內的數字
+      const matches = content.match(regex);
+      const numberString = matches ? matches[1].replace(/,/g, "") : ""; // 使用正則表達式提取的數字
+
       const number = parseInt(numberString, 10);
       return isNaN(number) ? 0 : number;
     }
+
     const number5 = parseNumber2(
       "#printhere > div:nth-child(3) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(6) > td:nth-child(4) > div"
     );
@@ -78,9 +83,20 @@ export async function getStock() {
       "#printhere > div:nth-child(3) > table > tbody > tr:nth-child(2) > td > table > tbody > tr:nth-child(6) > td:nth-child(8) > div"
     );
 
-    getData.push([formattedDate, number1, number2, number3, number4, number5, number6]);
+    getData.push([
+      formattedDate,
+      number1,
+      number2,
+      number3,
+      number4,
+      number1 - number2,
+      -number3 + number4,
+      number1 + number4 - number2 - number3,
+      number5 - number6,
+    ]);
   }
   const data = await query("INSERT INTO crawler.stock VALUES ?", [getData]);
+  await query("DELETE FROM crawler.stock WHERE col1 = 0");
   console.log(data);
   console.log(getData);
 }

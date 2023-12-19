@@ -13,7 +13,7 @@ async function test(){
   console.log(stockData)
 }
 
-schedule.scheduleJob("0 0 12 * * *", async function () {
+schedule.scheduleJob("0 1 15 * * *", async function () {
   try {
     let stockData = await crawler.getStock();
   } catch (error) {

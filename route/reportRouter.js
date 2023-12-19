@@ -17,13 +17,25 @@ router.post("/", async function (req, res) {
   let begin_date = req.body.begin_date;
   let end_date = req.body.end_date;
 
-  let stockData = await query(`SELECT DATE_FORMAT(date,'%Y-%m-%d') AS time, col1, col2,col3,col4,col5,col6 FROM crawler.stock WHERE date BETWEEN ? AND ?`, [
+  let stockData1 = await query(`SELECT DATE_FORMAT(date,'%Y-%m-%d') AS time, col1, col2,col3,col4 FROM crawler.stock WHERE date BETWEEN ? AND ?`, [
+    begin_date,
+    end_date,
+  ]);
+
+  let stockData2 = await query(`SELECT DATE_FORMAT(date,'%Y-%m-%d') AS time, col5,col6,col7,col8 FROM crawler.stock WHERE date BETWEEN ? AND ?`, [
+    begin_date,
+    end_date,
+  ]);
+
+  let stockTotalData = await query(`SELECT DATE_FORMAT(date,'%Y-%m-%d') AS time, col1, col2,col3,col4,col5,col6,col7,col8 FROM crawler.stock WHERE date BETWEEN ? AND ?`, [
     begin_date,
     end_date,
   ]);
   res.send(
     JSON.stringify({
-      stockData: stockData,
+      stockData1: stockData1,
+      stockData2: stockData2,
+      stockTotalData: stockTotalData,
     })
   );
 });
